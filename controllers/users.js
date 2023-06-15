@@ -21,7 +21,12 @@ module.exports.getUserId = (req, res) => {
       }
       return res.status(STATUS_OK).send(user);
     })
-    .catch(() => res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(ERROR_CODE).send({ message: 'Неверный запрос' });
+      }
+      return res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' });
+    });
 };
 
 module.exports.createUser = (req, res) => {

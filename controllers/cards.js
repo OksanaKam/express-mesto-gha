@@ -14,14 +14,19 @@ module.exports.getAllCards = (req, res) => Card.find({})
 
 module.exports.deleteCardId = (req, res) => {
   const { cardId } = req.params;
-  return Card.findById(cardId)
+  return Card.findByIdAndRemove(cardId)
     .then((card) => {
       if (!card) {
         return res.status(STATUS_NOT_FOUND).send({ message: 'Запрашиваемый ресурс не найден' });
       }
       return res.status(STATUS_OK).send(card);
     })
-    .catch(() => res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(ERROR_CODE).send({ message: 'Неверный запрос' });
+      }
+      return res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' });
+    });
 };
 
 module.exports.createCard = (req, res) => {
