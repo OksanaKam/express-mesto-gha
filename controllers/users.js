@@ -4,7 +4,6 @@ const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-err');
 const BadRequestError = require('../errors/bad-request-err');
 const EmailError = require('../errors/email-err');
-const ServerError = require('../errors/server-err');
 const AuthError = require('../errors/auth-err');
 
 const {
@@ -14,9 +13,6 @@ const {
 
 module.exports.getAllUsers = (req, res, next) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
-  .catch(() => {
-    throw new ServerError('Внутренняя ошибка сервера');
-  })
   .catch(next);
 
 module.exports.getUserId = (req, res, next) => {
@@ -30,11 +26,10 @@ module.exports.getUserId = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError('Введен неверный id');
+        next(new BadRequestError('Введен неверный id'));
       }
-      throw new ServerError('Внутренняя ошибка сервера');
-    })
-    .catch(next);
+      next(err);
+    });
 };
 
 module.exports.getUserInfo = (req, res, next) => {
@@ -68,9 +63,8 @@ module.exports.createUser = (req, res, next) => {
       if (err.name === 'ValidationError') {
         throw new BadRequestError('Неверный запрос');
       }
-      throw new ServerError('Внутренняя ошибка сервера');
-    })
-    .catch(next);
+      next(err);
+    });
 };
 
 module.exports.updateProfile = (req, res, next) => {
@@ -94,9 +88,8 @@ module.exports.updateProfile = (req, res, next) => {
       if (err.name === 'ValidationError') {
         throw new BadRequestError('Произошла ошибка валидации');
       }
-      throw new ServerError('Внутренняя ошибка сервера');
-    })
-    .catch(next);
+      next(err);
+    });
 };
 
 module.exports.updateAvatar = (req, res, next) => {
@@ -120,9 +113,8 @@ module.exports.updateAvatar = (req, res, next) => {
       if (err.name === 'ValidationError') {
         throw new BadRequestError('Неверный запрос');
       }
-      throw new ServerError('Внутренняя ошибка сервера');
-    })
-    .catch(next);
+      next(err);
+    });
 };
 
 module.exports.login = (req, res, next) => {
@@ -137,7 +129,7 @@ module.exports.login = (req, res, next) => {
       res.send({ token });
     })
     .catch(() => {
-      throw new AuthError('Неправильные почта или пароль');
+      next(new AuthError('Неправильные почта или пароль'));
     })
     .catch(next);
 };

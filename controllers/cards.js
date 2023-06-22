@@ -1,7 +1,6 @@
 const Card = require('../models/card');
 const NotFoundError = require('../errors/not-found-err');
 const BadRequestError = require('../errors/bad-request-err');
-const ServerError = require('../errors/server-err');
 const ForbiddenError = require('../errors/forbidden-err');
 
 const {
@@ -11,9 +10,6 @@ const {
 
 module.exports.getAllCards = (req, res, next) => Card.find({})
   .then((cards) => res.status(STATUS_OK).send(cards))
-  .catch(() => {
-    throw new ServerError('Внутренняя ошибка сервера');
-  })
   .catch(next);
 
 module.exports.createCard = (req, res, next) => {
@@ -27,9 +23,8 @@ module.exports.createCard = (req, res, next) => {
       if (err.name === 'ValidationError') {
         throw new BadRequestError('Неверный запрос');
       }
-      throw new ServerError('Внутренняя ошибка сервера');
-    })
-    .catch(next);
+      next(err);
+    });
 };
 
 module.exports.deleteCardId = (req, res, next) => {
@@ -49,9 +44,8 @@ module.exports.deleteCardId = (req, res, next) => {
       if (err.name === 'CastError') {
         throw new BadRequestError('Неверный запрос');
       }
-      throw new ServerError('Внутренняя ошибка сервера');
-    })
-    .catch(next);
+      next(err);
+    });
 };
 
 module.exports.setLikeCard = (req, res, next) => Card.findByIdAndUpdate(
@@ -69,9 +63,8 @@ module.exports.setLikeCard = (req, res, next) => Card.findByIdAndUpdate(
     if (err.name === 'CastError') {
       throw new BadRequestError('Неверный запрос');
     }
-    throw new ServerError('Внутренняя ошибка сервера');
-  })
-  .catch(next);
+    next(err);
+  });
 
 module.exports.deleteLikeCard = (req, res, next) => Card.findByIdAndUpdate(
   req.params.cardId,
@@ -88,6 +81,5 @@ module.exports.deleteLikeCard = (req, res, next) => Card.findByIdAndUpdate(
     if (err.name === 'CastError') {
       throw new BadRequestError('Неверный запрос');
     }
-    throw new ServerError('Внутренняя ошибка сервера');
-  })
-  .catch(next);
+    next(err);
+  });
