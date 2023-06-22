@@ -34,13 +34,9 @@ module.exports.getUserId = (req, res, next) => {
 };
 
 module.exports.getUserInfo = (req, res, next) => {
-  User.find({ _id: req.user._id })
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError('Нет пользователя с таким id');
-      }
-      res.status(STATUS_OK).send(user);
-    })
+  const { _id } = req.user;
+  User.find({ _id })
+    .then((user) => res.status(STATUS_OK).send(user))
     .catch(next);
 };
 
