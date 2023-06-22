@@ -1,35 +1,22 @@
 const Card = require('../models/card');
+const NotFoundError = require('../errors/not-found-err');
+const BadRequestError = require('../errors/bad-request-err');
+const ServerError = require('../errors/server-err');
+const ForbiddenError = require('../errors/forbidden-err');
 
 const {
   STATUS_OK,
   STATUS_CREATED,
-  ERROR_CODE,
-  STATUS_NOT_FOUND,
-  STATUS_ERROR_SERVER,
 } = require('../utils/constants');
 
-module.exports.getAllCards = (req, res) => Card.find({})
+module.exports.getAllCards = (req, res, next) => Card.find({})
   .then((cards) => res.status(STATUS_OK).send(cards))
-  .catch(() => res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' }));
+  .catch(() => {
+    throw new ServerError('Внутренняя ошибка сервера');
+  })
+  .catch(next);
 
-module.exports.deleteCardId = (req, res) => {
-  const { cardId } = req.params;
-  return Card.findByIdAndRemove(cardId)
-    .then((card) => {
-      if (!card) {
-        return res.status(STATUS_NOT_FOUND).send({ message: 'Запрашиваемый ресурс не найден' });
-      }
-      return res.status(STATUS_OK).send(card);
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(ERROR_CODE).send({ message: 'Неверный запрос' });
-      }
-      return res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' });
-    });
-};
-
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const owner = req.user._id;
   const { name, link } = req.body;
 
@@ -38,44 +25,69 @@ module.exports.createCard = (req, res) => {
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(ERROR_CODE).send({ message: 'Неверный запрос' });
+        throw new BadRequestError('Неверный запрос');
       }
-      res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' });
-    });
+      throw new ServerError('Внутренняя ошибка сервера');
+    })
+    .catch(next);
 };
 
-module.exports.setLikeCard = (req, res) => Card.findByIdAndUpdate(
+module.exports.deleteCardId = (req, res, next) => {
+  const { cardId } = req.params;
+  return Card.findById(cardId)
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Нет карточки с таким id');
+      }
+      // eslint-disable-next-line eqeqeq
+      if (card.owner != req.user._id) {
+        throw new ForbiddenError('Нет прав удалить эту карточку');
+      }
+      return card.deleteOne({ _id: card.id });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        throw new BadRequestError('Неверный запрос');
+      }
+      throw new ServerError('Внутренняя ошибка сервера');
+    })
+    .catch(next);
+};
+
+module.exports.setLikeCard = (req, res, next) => Card.findByIdAndUpdate(
   req.params.cardId,
   { $addToSet: { likes: req.user._id } },
   { new: true },
 )
   .then((card) => {
     if (!card) {
-      return res.status(STATUS_NOT_FOUND).send({ message: 'Запрашиваемый ресурс не найден' });
+      throw new NotFoundError('Нет карточки с таким id');
     }
     return res.status(STATUS_CREATED).send(card);
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      return res.status(ERROR_CODE).send({ message: 'Неверный запрос' });
+      throw new BadRequestError('Неверный запрос');
     }
-    return res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' });
-  });
+    throw new ServerError('Внутренняя ошибка сервера');
+  })
+  .catch(next);
 
-module.exports.deleteLikeCard = (req, res) => Card.findByIdAndUpdate(
+module.exports.deleteLikeCard = (req, res, next) => Card.findByIdAndUpdate(
   req.params.cardId,
   { $pull: { likes: req.user._id } },
   { new: true },
 )
   .then((card) => {
     if (!card) {
-      return res.status(STATUS_NOT_FOUND).send({ message: 'Запрашиваемый ресурс не найден' });
+      throw new NotFoundError('Нет карточки с таким id');
     }
     return res.status(STATUS_OK).send(card);
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      return res.status(ERROR_CODE).send({ message: 'Неверный запрос' });
+      throw new BadRequestError('Неверный запрос');
     }
-    return res.status(STATUS_ERROR_SERVER).send({ message: 'Внутренняя ошибка сервера' });
-  });
+    throw new ServerError('Внутренняя ошибка сервера');
+  })
+  .catch(next);

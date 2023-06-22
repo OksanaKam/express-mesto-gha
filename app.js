@@ -2,12 +2,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const { celebrate, Joi } = require('celebrate');
+const { errors } = require('celebrate');
 const routerUsers = require('./routes/users');
 const routerCards = require('./routes/cards');
+const { login, createUser } = require('./controllers/users');
+const auth = require('./middlewares/auth');
 
 const { PORT = 3000 } = process.env;
-
-const { STATUS_NOT_FOUND } = require('./utils/constants');
 
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb')
   .then(() => {
@@ -22,18 +24,31 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '648881c428ae397ab376e594',
-  };
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required().pattern(/^[a-zA-z0-9]{8,}$/),
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string(),
+  }),
+}), createUser);
+
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required().pattern(/^[a-zA-z0-9]{8,}$/),
+  }),
+}), login);
+
+app.use(auth, routerUsers);
+app.use(auth, routerCards);
+
+app.use(errors());
+
+app.use((err, req, res, next) => {
+  res.status(err.statusCode).send({ message: err.message });
   next();
-});
-
-app.use(routerUsers);
-app.use(routerCards);
-
-app.use((req, res) => {
-  res.status(STATUS_NOT_FOUND).send({ message: 'Запрашиваемый ресурс не найден' });
 });
 
 app.listen(PORT, () => {
