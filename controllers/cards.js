@@ -37,13 +37,14 @@ module.exports.deleteCardId = (req, res, next) => {
       if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError('Нет прав удалить эту карточку');
       }
-      return card.deleteOne();
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Неверный запрос'));
-      }
-      next(err);
+      return Card.findByIdAndRemove(cardId)
+        .then((user) => res.status(STATUS_OK).send(user))
+        .catch((err) => {
+          if (err.name === 'CastError') {
+            next(new BadRequestError('Неверный запрос'));
+          }
+          next(err);
+        });
     });
 };
 
