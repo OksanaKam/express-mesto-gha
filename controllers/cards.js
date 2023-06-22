@@ -21,7 +21,7 @@ module.exports.createCard = (req, res, next) => {
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError('Неверный запрос');
+        next(new BadRequestError('Неверный запрос'));
       }
       next(err);
     });
@@ -42,7 +42,7 @@ module.exports.deleteCardId = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError('Неверный запрос');
+        next(new BadRequestError('Неверный запрос'));
       }
       next(err);
     });
@@ -61,7 +61,7 @@ module.exports.setLikeCard = (req, res, next) => Card.findByIdAndUpdate(
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      throw new BadRequestError('Неверный запрос');
+      next(new BadRequestError('Неверный запрос'));
     }
     next(err);
   });
@@ -79,7 +79,7 @@ module.exports.deleteLikeCard = (req, res, next) => Card.findByIdAndUpdate(
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      throw new BadRequestError('Неверный запрос');
+      next(new BadRequestError('Неверный запрос'));
     }
     next(err);
   });

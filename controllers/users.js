@@ -27,13 +27,14 @@ module.exports.getUserId = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError('Введен неверный id'));
+        return;
       }
       next(err);
     });
 };
 
 module.exports.getUserInfo = (req, res, next) => {
-  User.findOne({ _id: req.user._id })
+  User.find({ _id: req.user._id })
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Нет пользователя с таким id');
