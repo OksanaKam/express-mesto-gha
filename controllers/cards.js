@@ -60,7 +60,7 @@ module.exports.setLikeCard = (req, res, next) => Card.findByIdAndUpdate(
     return res.status(STATUS_CREATED).send(card);
   })
   .catch((err) => {
-    if (err.name === 'CastError' || err.name === 'ValidationError') {
+    if (err.name === 'CastError') {
       next(new BadRequestError('Введен некорректный id карточки'));
     }
     next(err);
@@ -78,7 +78,7 @@ module.exports.deleteLikeCard = (req, res, next) => Card.findByIdAndUpdate(
     return res.status(STATUS_OK).send(card);
   })
   .catch((err) => {
-    if (err.name === 'CastError' || err.name === 'ValidationError') {
+    if (err.name === 'CastError') {
       next(new BadRequestError('Введен некорректный id карточки'));
     }
     next(err);
