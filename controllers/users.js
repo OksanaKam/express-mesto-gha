@@ -25,7 +25,7 @@ module.exports.getUserId = (req, res, next) => {
       return res.status(STATUS_OK).send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
         next(new BadRequestError('Введен неверный id'));
         return;
       }
@@ -35,7 +35,7 @@ module.exports.getUserId = (req, res, next) => {
 
 module.exports.getUserInfo = (req, res, next) => {
   const { _id } = req.user;
-  User.find({ _id })
+  User.findOne({ _id })
     .then((user) => res.status(STATUS_OK).send(user))
     .catch(next);
 };
