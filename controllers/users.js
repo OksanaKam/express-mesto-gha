@@ -55,13 +55,17 @@ module.exports.createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => res.status(STATUS_CREATED).send(user))
+    .then((user) => {
+      const newUser = user.toObject();
+      delete newUser.password;
+      res.status(STATUS_CREATED).send(newUser);
+    })
     .catch((err) => {
       if (err.code === 11000) {
-        throw new EmailError(`Пользователь с такой электронной почтой ${email} уже зарегистрирован`);
+        next(new EmailError(`Пользователь с такой электронной почтой ${email} уже зарегистрирован`));
       }
       if (err.name === 'ValidationError') {
-        throw new BadRequestError('Неверный запрос');
+        next(new BadRequestError('Неверный запрос'));
       }
       next(err);
     });
