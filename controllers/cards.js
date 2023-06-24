@@ -30,22 +30,21 @@ module.exports.createCard = (req, res, next) => {
 module.exports.deleteCardId = (req, res, next) => {
   const { cardId } = req.params;
   return Card.findById(cardId)
+    .orFail(() => new NotFoundError('Нет карточки с таким id'))
     .then((card) => {
-      if (!card) {
-        throw new NotFoundError('Нет карточки с таким id');
-      }
       if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError('Нет прав удалить эту карточку');
       }
       return Card.findByIdAndRemove(cardId)
-        .then((user) => res.status(STATUS_OK).send(user))
+        .then((item) => res.status(STATUS_OK).send({ data: item }))
         .catch((err) => {
           if (err.name === 'CastError') {
-            next(new BadRequestError('Неверный запрос'));
+            next(new BadRequestError('Введен некорректный id карточки'));
           }
           next(err);
         });
-    });
+    })
+    .catch(next);
 };
 
 module.exports.setLikeCard = (req, res, next) => Card.findByIdAndUpdate(
