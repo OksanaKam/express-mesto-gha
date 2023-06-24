@@ -10,7 +10,6 @@ const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const { REGEX_AVATAR } = require('./utils/constants');
 const { REGEX_PASSWORD } = require('./utils/constants');
-const NotFoundError = require('./errors/not-found-err');
 
 const { PORT = 3000 } = process.env;
 
@@ -50,7 +49,15 @@ app.use(auth, routerCards);
 app.use(errors());
 
 app.use((err, req, res, next) => {
-  next(new NotFoundError('Ресурс не найден'));
+  const { statusCode = 500, message } = err;
+  res
+    .status(statusCode)
+    .send({
+      message: statusCode === 500
+        ? 'На сервере произошла ошибка'
+        : message,
+    });
+  next();
 });
 
 app.listen(PORT, () => {
