@@ -1,10 +1,10 @@
+/* eslint-disable consistent-return */
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-err');
 const BadRequestError = require('../errors/bad-request-err');
 const EmailError = require('../errors/email-err');
-const AuthError = require('../errors/auth-err');
 
 const {
   STATUS_OK,
@@ -12,7 +12,7 @@ const {
 } = require('../utils/constants');
 
 module.exports.getAllUsers = (req, res, next) => User.find({})
-  .then((users) => res.status(STATUS_OK).send(users))
+  .then((users) => res.send(users))
   .catch(next);
 
 module.exports.getUserId = (req, res, next) => {
@@ -59,10 +59,10 @@ module.exports.createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.code === 11000) {
-        next(new EmailError(`Пользователь с такой электронной почтой ${email} уже зарегистрирован`));
+        return next(new EmailError(`Пользователь с такой электронной почтой ${email} уже зарегистрирован`));
       }
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Неверный запрос'));
+        return next(new BadRequestError('Неверный запрос'));
       }
       next(err);
     });
@@ -87,7 +87,7 @@ module.exports.updateProfile = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError('Произошла ошибка валидации');
+        return next(new BadRequestError('Произошла ошибка валидации'));
       }
       next(err);
     });
@@ -112,7 +112,7 @@ module.exports.updateAvatar = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError('Неверный запрос');
+        return next(new BadRequestError('Неверный запрос'));
       }
       next(err);
     });
@@ -128,9 +128,6 @@ module.exports.login = (req, res, next) => {
         { expiresIn: '7d' },
       );
       res.send({ token });
-    })
-    .catch(() => {
-      next(new AuthError('Неправильные почта или пароль'));
     })
     .catch(next);
 };

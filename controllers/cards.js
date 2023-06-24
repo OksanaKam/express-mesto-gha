@@ -9,7 +9,7 @@ const {
 } = require('../utils/constants');
 
 module.exports.getAllCards = (req, res, next) => Card.find({})
-  .then((cards) => res.status(STATUS_OK).send(cards))
+  .then((cards) => res.send(cards))
   .catch(next);
 
 module.exports.createCard = (req, res, next) => {
@@ -21,7 +21,7 @@ module.exports.createCard = (req, res, next) => {
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Неверный запрос'));
+        return next(new BadRequestError('Неверный запрос'));
       }
       next(err);
     });
@@ -37,9 +37,10 @@ module.exports.deleteCardId = (req, res, next) => {
       }
       return Card.findByIdAndRemove(cardId)
         .then((item) => res.status(STATUS_OK).send({ data: item }))
+        // eslint-disable-next-line consistent-return
         .catch((err) => {
           if (err.name === 'CastError') {
-            next(new BadRequestError('Введен некорректный id карточки'));
+            return next(new BadRequestError('Введен некорректный id карточки'));
           }
           next(err);
         });
@@ -58,9 +59,10 @@ module.exports.setLikeCard = (req, res, next) => Card.findByIdAndUpdate(
     }
     return res.status(STATUS_CREATED).send(card);
   })
+  // eslint-disable-next-line consistent-return
   .catch((err) => {
     if (err.name === 'CastError') {
-      next(new BadRequestError('Введен некорректный id карточки'));
+      return next(new BadRequestError('Введен некорректный id карточки'));
     }
     next(err);
   });
@@ -76,9 +78,10 @@ module.exports.deleteLikeCard = (req, res, next) => Card.findByIdAndUpdate(
     }
     return res.status(STATUS_OK).send(card);
   })
+  // eslint-disable-next-line consistent-return
   .catch((err) => {
     if (err.name === 'CastError') {
-      next(new BadRequestError('Введен некорректный id карточки'));
+      return next(new BadRequestError('Введен некорректный id карточки'));
     }
     next(err);
   });
