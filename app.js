@@ -10,6 +10,7 @@ const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const { REGEX_AVATAR } = require('./utils/constants');
 const { REGEX_PASSWORD } = require('./utils/constants');
+const NotFoundError = require('./errors/not-found-err');
 
 const { PORT = 3000 } = process.env;
 
@@ -46,8 +47,13 @@ app.post('/signin', celebrate({
 app.use(auth, routerUsers);
 app.use(auth, routerCards);
 
+app.use((req, res, next) => {
+  next(new NotFoundError('Запрашиваемый ресурс не найден'));
+});
+
 app.use(errors());
 
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
   res
@@ -57,7 +63,7 @@ app.use((err, req, res, next) => {
         ? 'На сервере произошла ошибка'
         : message,
     });
-  next();
+  next(err);
 });
 
 app.listen(PORT, () => {
